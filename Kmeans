@@ -1,0 +1,73 @@
+# coding=utf-8
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+from sklearn.datasets import make_blobs
+
+#K-means算法具体实现
+class Kmeans():
+    
+    def __init__(self, n_clusters=4):
+        self.k = n_clusters
+
+    def fit(self, data):
+        """
+        聚类算法核心
+        """
+        n_samples, _ = data.shape
+        #随机选取初始类中心
+        self.centers = np.array(random.sample(list(data), self.k))
+        self.initial_centers = np.copy(self.centers)
+        
+        old_assigns = None
+        n_iters = 0
+        while True:
+            #根据当前类中心对数据集进行划分（根据数据点与类中心的欧氏距离判断其所属类中心）
+            new_assigns = [self.classify(datapoint) for datapoint in data]
+            
+            if new_assigns == old_assigns:
+                print('Training finished after {} iterations!'.format(n_iters))
+                return
+
+            old_assigns = new_assigns
+            n_iters += 1
+            #重新计算类中心
+            for id_ in range(self.k):
+                point_idx = np.where(np.array(new_assigns) == id_)
+                datapoint = data[point_idx]
+                self.centers[id_] = datapoint.mean(axis=0)
+
+    #计算数据点与类中心的欧氏距离
+    def l2_distance(self, datapoint):
+        dists = np.sqrt(np.sum((self.centers - datapoint) ** 2, axis=1))
+        return dists
+        
+    #根据当前类中心，重新划分所属类
+    def classify(self, datapoint):
+        dists = self.l2_distance(datapoint)
+        return np.argmin(dists)
+    
+    def plot_clusters(self, data):
+        plt.figure(figsize=(12, 10))
+        plt.title("Initial centers in black, final centers in red")
+        plt.scatter(data[:, 0], data[:, 1], marker='.', c=y)
+        plt.scatter(self.centers[:, 0], self.centers[:, 1], c='r')
+        plt.scatter(self.initial_centers[:, 0], self.initial_centers[:, 1], c='k')
+        plt.show()
+        
+        
+        
+        
+        
+#随机生成训练数据集，并利用matplotlib工具进行可视化
+np.random.seed(1000)
+X, y = make_blobs(centers=4, n_samples=1000)
+
+fig = plt.figure(figsize=(8,6))
+plt.scatter(X[:,0], X[:,1], c=y)
+plt.show()
+
+#利用K-means模型对训练数据集进行聚类
+kmeans = Kmeans(n_clusters=4)
+kmeans.fit(X)
+kmeans.plot_clusters(X)
